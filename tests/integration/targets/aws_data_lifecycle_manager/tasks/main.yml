@@ -1,0 +1,238 @@
+- module_defaults:
+    group/aws:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token | default(omit) }}"
+      region: "{{ aws_region }}"
+    flowerysong.melange.aws_data_lifecycle_manager:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token | default(omit) }}"
+      region: "{{ aws_region }}"
+  block:
+    - name: Create IAM role
+      amazon.community.iam_role:
+        name: "{{ resource_prefix }}-dlm"
+        description: Test role for aws_dlm
+        assume_role_policy_document:
+          Version: "2012-10-17"
+          Statement:
+            - Action: sts:AssumeRole
+              Effect: Allow
+              Principal:
+                Service: dlm.amazonaws.com
+        create_instance_profile: false
+      register: iam_role
+
+    # ============================================================
+
+    - name: Create the simplest policy
+      flowerysong.melange.aws_data_lifecycle_manager:
+        role: "{{ iam_role.iam_role.arn }}"
+        description: Test policy for flowerysong.melange.aws_data_lifecycle_manager
+        target_tags:
+          test_prefix: this is {{ resource_prefix }}
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+
+    - name: Test unchanged policy
+      flowerysong.melange.aws_data_lifecycle_manager:
+        role: "{{ iam_role.iam_role.arn }}"
+        description: Test policy for flowerysong.melange.aws_data_lifecycle_manager
+        target_tags:
+          test_prefix: this is {{ resource_prefix }}
+      register: result
+
+    - assert:
+        that:
+          - result is not changed
+
+    - name: Test check mode removal
+      flowerysong.melange.aws_data_lifecycle_manager:
+        state: absent
+        target_tags:
+          test_prefix: this is {{ resource_prefix }}
+      check_mode: true
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+
+    - name: Test removal
+      flowerysong.melange.aws_data_lifecycle_manager:
+        state: absent
+        target_tags:
+          test_prefix: this is {{ resource_prefix }}
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+
+    - name: Test removal of a nonexistent policy
+      flowerysong.melange.aws_data_lifecycle_manager:
+        state: absent
+        target_tags:
+          test_prefix: this is {{ resource_prefix }}
+      register: result
+
+    - assert:
+        that:
+          - result is not changed
+
+    # ============================================================
+
+    - name: Recreate policy
+      flowerysong.melange.aws_data_lifecycle_manager:
+        role: "{{ iam_role.iam_role.arn }}"
+        description: Test policy for flowerysong.melange.aws_data_lifecycle_manager
+        target_tags:
+          test_prefix: this is {{ resource_prefix }}
+      register: policy_result
+
+    - assert:
+        that:
+          - policy_result is changed
+
+    - name: Test removal by ID
+      flowerysong.melange.aws_data_lifecycle_manager:
+        state: absent
+        policy_id: "{{ policy_result.policy.policy_id }}"
+        target_tags:
+          test_prefix: also {{ resource_prefix }}
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+
+    - name: Test removal of a nonexistent policy by ID
+      flowerysong.melange.aws_data_lifecycle_manager:
+        state: absent
+        policy_id: "{{ policy_result.policy.policy_id }}"
+        target_tags:
+          test_prefix: also {{ resource_prefix }}
+      register: result
+
+    - assert:
+        that:
+          - result is not changed
+
+    # ============================================================
+
+    - name: Create complex policy
+      flowerysong.melange.aws_data_lifecycle_manager:
+        role: "{{ iam_role.iam_role.arn }}"
+        description: Initial test policy for flowerysong.melange.aws_data_lifecycle_manager
+        schedule_name: weird schedule
+        target_tags:
+          test_prefix: this is {{ resource_prefix }}
+        enabled: false
+        resource_type: instance
+        exclude_boot_volume: true
+        start_time: "01:00"
+        interval: 3
+        retain: 2
+        copy_tags: true
+        tags_to_add:
+          test_status: this is {{ resource_prefix }}
+        variable_tags:
+          test_timestamp: $(timestamp)
+          test_id: $(instance-id)
+      register: policy_result
+
+    - assert:
+        that:
+          - policy_result is changed
+
+    - name: Modify policy
+      flowerysong.melange.aws_data_lifecycle_manager:
+        role: "{{ iam_role.iam_role.arn }}"
+        description: Test policy for flowerysong.melange.aws_data_lifecycle_manager
+        resource_type: instance
+        target_tags:
+          test_prefix: this is {{ resource_prefix }}
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+          - result.policy.policy_id == policy_result.policy.policy_id
+
+    - name: Don't modify policy
+      flowerysong.melange.aws_data_lifecycle_manager:
+        role: "{{ iam_role.iam_role.arn }}"
+        description: Test policy for flowerysong.melange.aws_data_lifecycle_manager
+        resource_type: instance
+        target_tags:
+          test_prefix: this is {{ resource_prefix }}
+      register: result
+
+    - assert:
+        that:
+          - result is not changed
+
+    - name: Modify policy by ID
+      flowerysong.melange.aws_data_lifecycle_manager:
+        policy_id: "{{ policy_result.policy.policy_id }}"
+        role: "{{ iam_role.iam_role.arn }}"
+        description: Test policy for flowerysong.melange.aws_data_lifecycle_manager
+        resource_type: instance
+        target_tags:
+          test_prefix:
+            - this is {{ resource_prefix }}
+            - also {{ resource_prefix }}
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+          - result.policy.policy_id == policy_result.policy.policy_id
+
+    - name: Create a new instance policy to test matching
+      flowerysong.melange.aws_data_lifecycle_manager:
+        role: "{{ iam_role.iam_role.arn }}"
+        description: Test policy for flowerysong.melange.aws_data_lifecycle_manager
+        resource_type: instance
+        target_tags:
+          test_prefix: this is {{ resource_prefix }}
+      register: instance_result
+
+    - assert:
+        that:
+          - instance_result is changed
+          - instance_result.policy.policy_id != policy_result.policy.policy_id
+
+    - name: Create a new volume policy
+      flowerysong.melange.aws_data_lifecycle_manager:
+        role: "{{ iam_role.iam_role.arn }}"
+        description: Test policy for flowerysong.melange.aws_data_lifecycle_manager
+        target_tags:
+          test_prefix: this is {{ resource_prefix }}
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+          - result.policy.policy_id != policy_result.policy.policy_id
+          - result.policy.policy_id != instance_result.policy.policy_id
+
+    - name: Remove policies
+      flowerysong.melange.aws_data_lifecycle_manager:
+        policy_id: "{{ item.policy.policy_id }}"
+        state: absent
+      loop:
+        - "{{ policy_result }}"
+        - "{{ instance_result }}"
+        - "{{ result }}"
+
+  always:
+    - name: Remove IAM role
+      amazon.community.iam_role:
+        name: "{{ resource_prefix }}-dlm"
+        state: absent
+      ignore_errors: true

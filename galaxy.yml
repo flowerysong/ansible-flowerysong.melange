@@ -1,0 +1,11 @@
+namespace: flowerysong
+name: melange
+version: 1.0.0
+readme: README.md
+authors:
+  - Paul Arthur (@flowerysong)
+description: null
+license_file: COPYING
+tags: [community, aws, cloud, amazon]
+dependencies:
+  amazon.aws: '>=1.0.0'
