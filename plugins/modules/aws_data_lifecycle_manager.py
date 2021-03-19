@@ -19,6 +19,47 @@ description:
   - Manage AWS Data Lifecycle Manager policies.
 version_added: "2.10"
 options:
+  copy_tags:
+    type: bool
+    default: false
+  description: {}
+  enabled:
+    type: bool
+    default: true
+  exclude_boot_volume:
+    type: bool
+    default: false
+  interval:
+    type: int
+    default: 24
+  policy_id: {}
+  resource_type:
+    choices:
+      - instance
+      - volume
+    default: volume
+  retain:
+    type: int
+    default: 7
+  role: {}
+  schedule_name:
+    default: Default Schedule
+  start_time:
+    default: 00:00
+  state:
+    choices:
+      - present
+      - absent
+    default: present
+  tags_to_add:
+    type: dict
+    default: {}
+  target_tags:
+    type: dict
+  variable_tags:
+    type: dict
+    default: {}
+
 extends_documentation_fragment:
   - amazon.aws.aws
   - amazon.aws.ec2
