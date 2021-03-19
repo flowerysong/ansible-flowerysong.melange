@@ -10,11 +10,11 @@ DOCUMENTATION = """
     author: Paul Arthur (@flowerysong)
     short_description: Simple lookup for HashiCorp Vault
     description:
-        - Implementation from scratch of a reasonable Ansible lookup for HashiCorp Vault secrets.
+        - Implementation from scratch of a reasonable Ansible lookup for HashiCorp Vault.
         - The community-maintained lookup has accidentally broken its interface multiple times, and retains a number of very crufty interface decisions.
     options:
       _terms:
-        description: Path(s) of secrets to look up.
+        description: Paths to look up.
         required: True
       raw:
         description: Controls whether the entire API response is returned, or just the data.
