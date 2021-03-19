@@ -4,8 +4,9 @@ version: 1.0.0
 readme: README.md
 authors:
   - Paul Arthur (@flowerysong)
-description: null
+description: A varied mix of things
 license_file: COPYING
-tags: [community, aws, cloud, amazon]
+tags: [community, aws, cloud, amazon, hashicorp, vault]
 dependencies:
   amazon.aws: '>=1.0.0'
+repository: https://github.com/flowerysong/ansible-flowerysong.melange
