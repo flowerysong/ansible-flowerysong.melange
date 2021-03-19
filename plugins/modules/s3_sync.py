@@ -9,16 +9,12 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
-
-
 DOCUMENTATION = '''
 module: s3_sync
 short_description: Efficiently sync files between S3 and a local directory
 description:
-     - Sync an entire directory tree at once.
+  - Sync an entire directory tree at once.
+version_added: "1.0.0"
 options:
   direction:
     description:
@@ -43,6 +39,7 @@ options:
         for the file once it's uploaded. See the notes about the ETag header at
         U(https://docs.aws.amazon.com/AmazonS3/latest/API/RESTCommonResponseHeaders.html).
     type: list
+    elements: str
     default: [ e_tag ]
   bucket:
     description:
@@ -93,12 +90,14 @@ options:
     description:
       - List of patterns to include. Only files with matching filenames will be synced.
     type: list
+    elements: str
     required: false
     aliases: [ pattern ]
   excludes:
     description:
       - List of patterns to exclude. Can be used on its own or as a further constraint after I(patterns).
     type: list
+    elements: str
     required: no
     aliases: [ exclude ]
   use_regex:
@@ -126,11 +125,10 @@ options:
   directory_mode:
     description:
       - Mode to set on newly created local directories.
+    type: str
     required: false
 
 requirements:
-  - boto3 >= 1.4.4
-  - botocore
   - dateutil
 
 notes:
@@ -574,7 +572,7 @@ def main():
     argument_spec = dict(
         direction=dict(required=True, choices=['push', 'pull']),
         overwrite=dict(choices=['always', 'never', 'different', 'newer', 'larger'], default='never'),
-        diff_attributes=dict(type='list', default=['e_tag']),
+        diff_attributes=dict(type='list', elements='str', default=['e_tag']),
         bucket=dict(required=True),
         prefix=dict(default=''),
         path=dict(type='path', required=True),
@@ -587,8 +585,8 @@ def main():
         mime_types_map=dict(type='dict', default={}),
         mime_override=dict(type='bool', default=False),
         mime_strict=dict(type='bool', default=False),
-        patterns=dict(required=False, type='list', aliases=['pattern']),
-        excludes=dict(required=False, type='list', aliases=['exclude']),
+        patterns=dict(required=False, type='list', elements='str', aliases=['pattern']),
+        excludes=dict(required=False, type='list', elements='str', aliases=['exclude']),
         hidden=dict(type='bool', default=False),
         use_regex=dict(type='bool', default=False),
         metadata=dict(type='dict', default={}),

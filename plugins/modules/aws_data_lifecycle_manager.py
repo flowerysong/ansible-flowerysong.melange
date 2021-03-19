@@ -7,56 +7,107 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
-
-
 DOCUMENTATION = '''
 module: aws_data_lifecycle_manager
 short_description: Manage AWS Data Lifecycle Manager policies
 description:
   - Manage AWS Data Lifecycle Manager policies.
-version_added: "2.10"
+version_added: "1.0.0"
+author:
+  - Paul Arthur (@flowerysong)
 options:
   copy_tags:
+    description:
+      - Copy tags from the source volume to the snapshot.
     type: bool
     default: false
-  description: {}
+  description:
+    description:
+      - A description of the policy.
+      - Required if I(state=present).
+    type: str
   enabled:
+    description:
+      - Enable or disable the policy.
     type: bool
     default: true
   exclude_boot_volume:
+    description:
+      - Exclude the boot volume from snapshots.
+      - Only valid when I(resource_type=instance).
     type: bool
     default: false
   interval:
+    description:
+      - The interval between snapshots, in hours.
     type: int
+    choices:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 6
+      - 8
+      - 12
+      - 24
     default: 24
-  policy_id: {}
+  policy_id:
+    description:
+      - ID of an existing policy.
+      - Required if I(state=absent) and I(target_tags) is not set.
+    type: str
   resource_type:
+    description:
+      - Target resource type for the policy.
+    type: str
     choices:
       - instance
       - volume
     default: volume
   retain:
+    description:
+      - The number of snapshots to retain for each volume.
     type: int
     default: 7
-  role: {}
+  role:
+    description:
+      - The ARN of the role used to execute actions specified by the policy.
+      - Required if I(state=present).
+    type: str
   schedule_name:
+    description:
+      - The name of the schedule.
+    type: str
     default: Default Schedule
   start_time:
+    description:
+      - The base time (in UTC) for operations.
+      - The operation will trigger within a one-hour window following the specified time.
+    type: str
     default: 00:00
   state:
+    description:
+      - Create or delete the policy.
+    type: str
     choices:
       - present
       - absent
     default: present
   tags_to_add:
+    description:
+      - Extra tags to add to resources created by the policy.
     type: dict
     default: {}
   target_tags:
+    description:
+      - Tags that identify the resources targeted by the policy.
+      - Required if I(state=present) or if I(policy_id) is not set.
     type: dict
   variable_tags:
+    description:
+      - Special templated tags to add to resources created by the policy.
+      - Only valid when I(resource_type=instance).
+      - Tag names follow normal AWS rules, values can be C($(instance-id)) or C($(timestamp))
     type: dict
     default: {}
 
@@ -114,7 +165,7 @@ def find_existing_policy(module, client):
             response = client.get_lifecycle_policy(PolicyId=module.params['policy_id'])
         except is_boto3_error_code('ResourceNotFoundException'):
             return None
-        except (BotoCoreError, ClientError) as e:
+        except (BotoCoreError, ClientError) as e:   # pylint: disable=duplicate-except
             module.fail_json_aws(e, msg='Failed to fetch existing policy.')
 
         return response['Policy']
@@ -136,7 +187,7 @@ def find_existing_policy(module, client):
             response = client.get_lifecycle_policy(PolicyId=policy['PolicyId'])
         except is_boto3_error_code('ResourceNotFoundException'):
             continue
-        except (BotoCoreError, ClientError) as e:
+        except (BotoCoreError, ClientError) as e:   # pylint: disable=duplicate-except
             module.fail_json_aws(e, msg='Failed to fetch existing policy.')
 
         # If it has more tags than we requested it's not a match
@@ -199,7 +250,7 @@ def main():
         exclude_boot_volume=dict(type='bool', default=False),
         target_tags=dict(type='dict'),
         start_time=dict(default='00:00'),
-        interval=dict(type='int', default=24),
+        interval=dict(type='int', choices=[1, 2, 3, 4, 6, 8, 12, 24], default=24),
         retain=dict(type='int', default=7),
         copy_tags=dict(type='bool', default=False),
         tags_to_add=dict(type='dict', default={}),
@@ -228,7 +279,7 @@ def main():
                 )
             except is_boto3_error_code('ResourceNotFoundException'):
                 pass
-            except (BotoCoreError, ClientError) as e:
+            except (BotoCoreError, ClientError) as e:   # pylint: disable=duplicate-except
                 module.fail_json_aws(e, msg='Failed to delete policy.')
 
         module.exit_json(changed=True)

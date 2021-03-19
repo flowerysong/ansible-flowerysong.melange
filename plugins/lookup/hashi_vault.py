@@ -50,23 +50,23 @@ DOCUMENTATION = """
 EXAMPLES = """
 - name: Look up a standard secret
   debug:
-   msg: The result is: {{ lookup('flowerysong.melange.hashi_vault', 'secret/ping') }}
+    msg: The result is {{ lookup('flowerysong.melange.hashi_vault', 'secret/ping') }}
 
 - name: Look up multiple secrets
   debug:
-    msg: The results are: {{ query('flowerysong.melange.hashi_vault', 'secret/ping', 'secret/penguin') }}
+    msg: The results are {{ query('flowerysong.melange.hashi_vault', 'secret/ping', 'secret/penguin') }}
 
 - name: Look up a K/V v2 secret's data
   debug:
-    msg: The result is: {{ lookup('flowerysong.melange.hashi_vault', 'secret/data/ping').data }}
+    msg: The result is {{ lookup('flowerysong.melange.hashi_vault', 'secret/data/ping').data }}
 
 - name: Get the entire raw response
   debug:
-    msg: The result is: {{ lookup('flowerysong.melange.hashi_vault', 'secret/config', raw=true) }}
+    msg: The result is {{ lookup('flowerysong.melange.hashi_vault', 'secret/config', raw=true) }}
 
 - name: Use a variable to configure the lookup
   debug:
-    msg: The result is: {{ lookup('flowerysong.melange.hashi_vault', 'secret/ping', **hashi_conf)
+    msg: The result is {{ lookup('flowerysong.melange.hashi_vault', 'secret/ping', **hashi_conf) }}
   vars:
     hashi_conf:
       token: s.b5lmbxyphjvhcfesmdffqhun
@@ -118,20 +118,20 @@ class LookupModule(LookupBase):
         client = hvac.Client(**client_kwargs)
 
         for term in terms:
-            display.debug('hashi_vault lookup term: {}'.format(term))
+            display.debug('hashi_vault lookup term: {0}'.format(term))
 
             try:
                 secret = client.read(term)
             except (hvac.exceptions.VaultError, RequestException) as e:
                 raise AnsibleError('Unable to fetch secret', orig_exc=e)
 
-            display.vvvv('hashi_vault lookup found {}'.format(secret))
+            display.vvvv('hashi_vault lookup found {0}'.format(secret))
 
             if secret:
                 if not self.get_option('raw'):
                     secret = secret['data']
                 ret.append(secret)
             else:
-                raise AnsibleError('Unable to find secret matching "{}"'.format(term))
+                raise AnsibleError('Unable to find secret matching "{0}"'.format(term))
 
         return ret
