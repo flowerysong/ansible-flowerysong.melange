@@ -274,7 +274,6 @@ objects:
           sample: STANDARD
 '''
 
-import hashlib
 import mimetypes
 import os
 import re
