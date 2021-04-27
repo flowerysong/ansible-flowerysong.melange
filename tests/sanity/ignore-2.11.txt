@@ -1,0 +1,2 @@
+plugins/modules/aws_data_lifecycle_manager.py validate-modules:no-log-needed # From AnsibleAWSModule, will be fixed in the next release
+plugins/modules/s3_sync.py validate-modules:no-log-needed # From AnsibleAWSModule, will be fixed in the next release

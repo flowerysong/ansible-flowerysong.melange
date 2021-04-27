@@ -1,0 +1,75 @@
+name: ansible-test
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: 48 16 * * *
+
+env:
+  COLL_NS: flowerysong
+  COLL_NAME: melange
+  PYTHON_VERSION: 3.8
+  ANSIBLE_COLLECTIONS_PATHS: ${{ github.workspace }}
+
+jobs:
+  build_collection:
+    name: build collection
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install 'git+https://github.com/ansible/ansible@stable-2.11#egg=ansible-core'
+
+      - name: Build collection
+        run: ansible-galaxy collection build -vv
+
+      - name: Upload collection
+        uses: actions/upload-artifact@v2
+        with:
+          path: ${{ env.COLL_NS }}-${{ env.COLL_NAME }}-*.tar.gz
+          name: ${{ env.COLL_NS }}-${{ env.COLL_NAME }}
+
+  static_analysis:
+    needs: build_collection
+    name: static analysis (${{ matrix.ansible_version.name }})
+    strategy:
+      matrix:
+        ansible_version:
+          - name: ansible-base 2.10
+            version: ansible-base>2.10<2.11
+          - name: ansible-core stable-2.11
+            version: git+https://github.com/ansible/ansible@stable-2.11#egg=ansible-core
+          - name: ansible-core devel
+            version: git+https://github.com/ansible/ansible#egg=ansible-core
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install '${{ matrix.ansible_version.version }}' pycodestyle pylint pyyaml voluptuous yamllint junit-xml
+
+      - name: Download collection
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ env.COLL_NS }}-${{ env.COLL_NAME }}
+
+      - name: Install collection
+        run: ansible-galaxy collection install ${{ env.COLL_NS }}-${{ env.COLL_NAME }}-*.tar.gz
+
+      - name: Run tests
+        run: ansible-test sanity -v --color --docker
+        working-directory: ./ansible_collections/${{ env.COLL_NS }}/${{ env.COLL_NAME }}
