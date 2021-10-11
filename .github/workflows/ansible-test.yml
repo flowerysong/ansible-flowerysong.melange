@@ -48,6 +48,8 @@ jobs:
             version: ansible-base>2.10<2.11
           - name: ansible-core stable-2.11
             version: git+https://github.com/ansible/ansible@stable-2.11#egg=ansible-core
+          - name: ansible-core stable-2.12
+            version: git+https://github.com/ansible/ansible@stable-2.12#egg=ansible-core
           - name: ansible-core devel
             version: git+https://github.com/ansible/ansible#egg=ansible-core
     runs-on: ubuntu-latest
