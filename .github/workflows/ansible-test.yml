@@ -8,7 +8,7 @@ on:
 env:
   COLL_NS: flowerysong
   COLL_NAME: melange
-  PYTHON_VERSION: 3.8
+  PYTHON_VERSION: 3.9
   ANSIBLE_COLLECTIONS_PATHS: ${{ github.workspace }}
 
 jobs:
@@ -27,7 +27,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install 'git+https://github.com/ansible/ansible@stable-2.11#egg=ansible-core'
+          python -m pip install 'git+https://github.com/ansible/ansible@stable-2.13#egg=ansible-core'
 
       - name: Build collection
         run: ansible-galaxy collection build -vv
@@ -44,13 +44,11 @@ jobs:
     strategy:
       matrix:
         ansible_version:
-          - name: ansible-base 2.10
-            version: ansible-base>2.10<2.11
-          - name: ansible-core stable-2.11
-            version: git+https://github.com/ansible/ansible@stable-2.11#egg=ansible-core
-          - name: ansible-core stable-2.12
+          - name: stable-2.12
             version: git+https://github.com/ansible/ansible@stable-2.12#egg=ansible-core
-          - name: ansible-core devel
+          - name: stable-2.13
+            version: git+https://github.com/ansible/ansible@stable-2.13#egg=ansible-core
+          - name: devel
             version: git+https://github.com/ansible/ansible#egg=ansible-core
     runs-on: ubuntu-latest
     steps:
