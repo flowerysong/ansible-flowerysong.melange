@@ -14,6 +14,7 @@ options:
     required: true
 '''
 
+
 def sts_allow(value):
     princ = value[1]
     if value[0] == 'AWS':
