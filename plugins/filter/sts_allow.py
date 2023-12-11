@@ -3,6 +3,7 @@
 
 DOCUMENTATION = '''
 name: sts_allow
+description: Produce an sts:AssumeRole statement for a principal
 short_description: Produce an sts:AssumeRole statement for a principal
 version_added: "1.1.0"
 author:

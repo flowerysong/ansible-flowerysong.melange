@@ -3,6 +3,7 @@
 
 DOCUMENTATION = '''
 name: route53_unescape
+description: Reverse octal escaping in Route53 resource names
 short_description: Reverse octal escaping in Route53 resource names
 version_added: "1.1.0"
 author:

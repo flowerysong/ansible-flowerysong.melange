@@ -52,6 +52,7 @@ options:
       - Added to local files when determining their keys.
     type: str
     required: false
+    default: ''
   path:
     description:
       - Local directory path for synchronization.
@@ -116,6 +117,7 @@ options:
       - A dictionary containing metadata for the uploaded objects.
     type: dict
     required: false
+    default: {}
   delete:
     description:
       - Remove objects that exist in the destination but are not present in the source.
