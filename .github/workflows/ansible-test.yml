@@ -39,19 +39,19 @@ jobs:
 
   static_analysis:
     needs: build_collection
-    name: static analysis (${{ matrix.ansible_version.name }})
+    name: static analysis (${{ matrix.ansible_version }}, py${{ matrix.python_version)
     strategy:
       matrix:
+        python_version:
+          - 3.12
         ansible_version:
-          - name: stable-2.15
-            version: git+https://github.com/ansible/ansible@stable-2.15#egg=ansible-core
-            python: 3.9
-          - name: stable-2.16
-            version: git+https://github.com/ansible/ansible@stable-2.16#egg=ansible-core
-            python: 3.12
-          - name: devel
-            version: git+https://github.com/ansible/ansible#egg=ansible-core
-            python: 3.12
+          - stable-2.16
+          - devel
+        include:
+          - ansible_version: stable-2.15
+            python_version: 3.11
+          - ansible_version: stable-2.15
+            python_version: 3.9
     runs-on: ubuntu-latest
     steps:
       - name: Set up Python
@@ -62,7 +62,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install '${{ matrix.ansible_version.version }}' pycodestyle pylint pyyaml voluptuous yamllint junit-xml
+          python -m pip install 'git+https://github.com/ansible/ansible@${{ matrix.ansible_version }}#egg=ansible-core' pycodestyle pylint pyyaml voluptuous yamllint junit-xml
 
       - name: Download collection
         uses: actions/download-artifact@v3
