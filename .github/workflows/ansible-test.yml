@@ -39,7 +39,7 @@ jobs:
 
   static_analysis:
     needs: build_collection
-    name: static analysis (${{ matrix.ansible_version }}, py${{ matrix.python_version)
+    name: static analysis (${{ matrix.ansible_version }}, py${{ matrix.python_version }})
     strategy:
       matrix:
         python_version:
