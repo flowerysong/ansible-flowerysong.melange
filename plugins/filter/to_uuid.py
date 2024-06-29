@@ -3,6 +3,7 @@
 
 DOCUMENTATION = '''
 name: to_uuid
+description: Convert a binary UUID to the string representation
 short_description: Convert a binary UUID to the string representation
 version_added: "1.1.0"
 author:
