@@ -2,8 +2,6 @@ name: ansible-test
 on:
   push:
   pull_request:
-  schedule:
-    - cron: 48 16 * * *
 
 env:
   COLL_NS: flowerysong
