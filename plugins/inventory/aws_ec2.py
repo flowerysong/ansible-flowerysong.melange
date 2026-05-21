@@ -19,10 +19,6 @@ description:
 notes:
   - If no credentials are provided and the control node has an associated IAM instance profile then the
     role will be used for authentication.
-  - The C(use_contrib_script_compatible_ec2_tag_keys) option is deprecated and will be removed in a release after 2026-12-01.
-    Use the C(ec2_tags) structure instead (e.g. use C(ec2_tags.TAGNAME) rather than C(ec2_tag_TAGNAME)).
-  - The C(use_contrib_script_compatible_sanitization) option is deprecated and will be removed in a release after 2026-12-01.
-    Use Ansible's default group name sanitization instead.
 author:
   - Sloane Hertel (@s-hertel)
 options:
@@ -104,29 +100,6 @@ options:
       - You can set this option to False in the inventory config file which will allow 403 errors to be gracefully skipped.
     type: bool
     default: true
-  use_contrib_script_compatible_sanitization:
-    description:
-      - By default this plugin is using a general group name sanitization to create safe and usable group names for use in Ansible.
-        This option allows you to override that, in efforts to allow migration from the old C(ec2.py) inventory script and
-        matches the sanitization of groups when the script's ``replace_dash_in_groups`` option is set to ``False``.
-        To replicate behavior of ``replace_dash_in_groups = True`` with constructed groups,
-        you will need to replace hyphens with underscores via the regex_replace filter for those entries.
-      - For this to work you should also turn off the TRANSFORM_INVALID_GROUP_CHARS setting,
-        otherwise the core engine will just use the standard sanitization on top.
-      - This is not the default as such names break certain functionality as not all characters are valid Python identifiers
-        which group names end up being used as.
-      - The use of this feature is deprecated and will be removed in a release after 2026-12-01.
-        Use Ansible's default group name sanitization instead.
-    type: bool
-    default: false
-  use_contrib_script_compatible_ec2_tag_keys:
-    description:
-      - Expose the host tags with C(ec2_tag_TAGNAME) keys like the old C(ec2.py) inventory script.
-      - The use of this feature is deprecated and will be removed in a release after 2026-12-01.
-        Use the C(ec2_tags) structure instead (e.g. use C(ec2_tags.TAGNAME) rather than C(ec2_tag_TAGNAME)).
-    type: bool
-    default: false
-    version_added: 1.5.0
   hostvars_prefix:
     description:
       - The prefix for host variables names coming from AWS.
@@ -490,17 +463,12 @@ def _prepare_host_vars(
     original_host_vars,
     hostvars_prefix=None,
     hostvars_suffix=None,
-    use_contrib_script_compatible_ec2_tag_keys=False,
 ):
     host_vars = camel_dict_to_snake_dict(original_host_vars, ignore_list=["Tags"])
     host_vars["ec2_tags"] = boto3_tag_list_to_ansible_dict(original_host_vars.get("Tags", []))
 
     # Allow easier grouping by region
     host_vars["placement"]["region"] = host_vars["placement"]["availability_zone"][:-1]
-
-    if use_contrib_script_compatible_ec2_tag_keys:
-        for k, v in host_vars["ec2_tags"].items():
-            host_vars[f"ec2_tag_{k}"] = v
 
     if hostvars_prefix or hostvars_suffix:
         for hostvar, hostval in host_vars.copy().items():
@@ -854,7 +822,6 @@ class InventoryModule(AWSInventoryBase):
         allow_duplicated_hosts=False,
         hostvars_prefix=None,
         hostvars_suffix=None,
-        use_contrib_script_compatible_ec2_tag_keys=False,
     ):
         for group in groups:
             group = self.inventory.add_group(group)
@@ -865,7 +832,6 @@ class InventoryModule(AWSInventoryBase):
                 allow_duplicated_hosts=allow_duplicated_hosts,
                 hostvars_prefix=hostvars_prefix,
                 hostvars_suffix=hostvars_suffix,
-                use_contrib_script_compatible_ec2_tag_keys=use_contrib_script_compatible_ec2_tag_keys,
             )
             self.inventory.add_child("all", group)
 
@@ -876,7 +842,6 @@ class InventoryModule(AWSInventoryBase):
         allow_duplicated_hosts=False,
         hostvars_prefix=None,
         hostvars_suffix=None,
-        use_contrib_script_compatible_ec2_tag_keys=False,
     ):
         for host in hosts:
             if allow_duplicated_hosts:
@@ -890,7 +855,6 @@ class InventoryModule(AWSInventoryBase):
                 host,
                 hostvars_prefix,
                 hostvars_suffix,
-                use_contrib_script_compatible_ec2_tag_keys,
             )
             for name in hostname_list:
                 yield to_text(name), host_vars
@@ -903,7 +867,6 @@ class InventoryModule(AWSInventoryBase):
         allow_duplicated_hosts=False,
         hostvars_prefix=None,
         hostvars_suffix=None,
-        use_contrib_script_compatible_ec2_tag_keys=False,
     ):
         """
         :param hosts: a list of hosts to be added to a group
@@ -912,7 +875,6 @@ class InventoryModule(AWSInventoryBase):
         :param bool allow_duplicated_hosts: if true, accept same host with different names
         :param str hostvars_prefix: starts the hostvars variable name with this prefix
         :param str hostvars_suffix: ends the hostvars variable name with this suffix
-        :param bool use_contrib_script_compatible_ec2_tag_keys: transform the host name with the legacy naming system
         """
 
         for name, host_vars in self.iter_entry(
@@ -921,7 +883,6 @@ class InventoryModule(AWSInventoryBase):
             allow_duplicated_hosts=allow_duplicated_hosts,
             hostvars_prefix=hostvars_prefix,
             hostvars_suffix=hostvars_suffix,
-            use_contrib_script_compatible_ec2_tag_keys=use_contrib_script_compatible_ec2_tag_keys,
         ):
             self.inventory.add_host(name, group=group)
             for k, v in host_vars.items():
@@ -959,27 +920,7 @@ class InventoryModule(AWSInventoryBase):
 
         hostvars_prefix = self.get_option("hostvars_prefix")
         hostvars_suffix = self.get_option("hostvars_suffix")
-        use_contrib_script_compatible_sanitization = self.get_option("use_contrib_script_compatible_sanitization")
-        use_contrib_script_compatible_ec2_tag_keys = self.get_option("use_contrib_script_compatible_ec2_tag_keys")
         use_ssm_inventory = self.get_option("use_ssm_inventory")
-
-        if use_contrib_script_compatible_sanitization:
-            self.display.deprecated(
-                "The 'use_contrib_script_compatible_sanitization' option is deprecated. "
-                "Use Ansible's default group name sanitization instead.",
-                date="2026-12-01",
-                collection_name="amazon.aws",
-            )
-
-            self._sanitize_group_name = self._legacy_script_compatible_group_sanitization
-
-        if use_contrib_script_compatible_ec2_tag_keys:
-            self.display.deprecated(
-                "The 'use_contrib_script_compatible_ec2_tag_keys' option is deprecated. "
-                "Use the 'ec2_tags' structure instead.",
-                date="2026-12-01",
-                collection_name="amazon.aws",
-            )
 
         if not all(isinstance(element, (dict, str)) for element in hostnames):
             self.fail_aws("Hostnames should be a list of dict and str.")
@@ -998,7 +939,6 @@ class InventoryModule(AWSInventoryBase):
             allow_duplicated_hosts=allow_duplicated_hosts,
             hostvars_prefix=hostvars_prefix,
             hostvars_suffix=hostvars_suffix,
-            use_contrib_script_compatible_ec2_tag_keys=use_contrib_script_compatible_ec2_tag_keys,
         )
 
         self.update_cached_result(path, cache, results)
