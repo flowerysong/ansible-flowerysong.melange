@@ -465,7 +465,7 @@ def _prepare_host_vars(
     hostvars_suffix=None,
 ):
     host_vars = camel_dict_to_snake_dict(original_host_vars)
-    host_vars.pop('tags')
+    host_vars.pop('tags', None)
     host_vars["ec2_tags"] = boto3_tag_list_to_ansible_dict(original_host_vars.get("Tags", []))
 
     # Allow easier grouping by region
