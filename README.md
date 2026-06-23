@@ -19,3 +19,13 @@ Module for querying AWS EC2 Elastic IP attributes.
 
 A rewrite of `s3_sync` with improved performance and support for
 syncing in both directions.
+
+## flowerysong.melange.synchronize
+
+A fork of `ansible.posix.synchronize` from before the interface was
+broken by people not understanding how it was supposed to work, with
+modernization so it works on current versions of Ansible.
+
+## flowerysong.melange.aws_ec2
+
+Temporary fork of the upstream inventory plugin to remove deprecation warnings.
