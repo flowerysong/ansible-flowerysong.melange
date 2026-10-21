@@ -8,5 +8,5 @@ description: A varied mix of things
 license_file: COPYING
 tags: [community, aws, cloud, amazon]
 dependencies:
-  amazon.aws: '>=1.0.0'
+  amazon.aws: '>=6.0.0'
 repository: https://github.com/flowerysong/ansible-flowerysong.melange
