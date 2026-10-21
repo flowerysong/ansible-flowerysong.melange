@@ -165,7 +165,7 @@ options:
       - Note that an empty string in O(rsync_opts) will end up transferring the
         current working directory.
     type: list
-    default:
+    default: []
     elements: str
   partial:
     description:
@@ -196,7 +196,22 @@ options:
         files are renamed into place in rapid succession.
     type: bool
     default: true
-
+  _local_rsync_path:
+    description:
+      - Internal option.
+    default: rsync
+  _local_rsync_password:
+    description:
+      - Internal option.
+  _substitute_controller:
+    description:
+      - Internal option.
+    type: bool
+    default: false
+  ssh_args:
+    description:
+      - Internal option.
+    type: str
 notes:
    - C(rsync) must be installed on both the local and remote host.
    - For the M(flowerysong.melange.synchronize) module, the "local host" is the
@@ -431,6 +446,8 @@ def main():
             set_remote_user=dict(type='bool', default=True),
             rsync_timeout=dict(type='int', default=0),
             rsync_opts=dict(type='list', default=[], elements='str'),
+            # Not actually used by the module
+            use_ssh_args=dict(type='bool', default=False),
             ssh_args=dict(type='str'),
             ssh_connection_multiplexing=dict(type='bool', default=False),
             partial=dict(type='bool', default=False),
